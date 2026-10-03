@@ -1,0 +1,9 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+httpx>=0.27
+pandas>=2.0
+numpy>=1.24
+joblib>=1.3
+# Pin this to the exact version used in your notebook when you trained the model,
+# otherwise unpickling the .pkl may warn or fail.
+scikit-learn>=1.3
