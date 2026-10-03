@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GoldPulse AI - Live Gold Prices, Egypt Rates & AI Forecast</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+    <!-- ============ Header ============ -->
+    <header class="topbar">
+        <div class="brand">
+            <svg viewBox="0 0 32 32" class="brand-mark" aria-hidden="true">
+                <path d="M4 22 L9 12 H23 L28 22 Z" fill="#D4AF37" />
+                <path d="M9 12 L12 6 H20 L23 12 Z" fill="#A9791C" />
+            </svg>
+            <div>
+                <h1>GoldPulse AI</h1>
+                <p>Live gold, Egyptian market rates and forecasts</p>
+            </div>
+        </div>
+        <div class="status">
+            <span id="liveBadge" class="badge badge-muted">Connecting…</span>
+            <span class="status-text">Updated <b id="updatedAt">--:--:--</b></span>
+            <span class="status-text">Refresh in <b id="countdown">30</b>s</span>
+            <button id="refreshBtn" class="btn btn-ghost" type="button">Refresh now</button>
+        </div>
+    </header>
+
+    <!-- ============ Live ticker ============ -->
+    <div class="ticker" aria-label="Live price ticker">
+        <div class="ticker-track" id="tickerTrack"></div>
+    </div>
+
+    <main class="container">
+
+        <!-- ============ Headline price cards ============ -->
+        <section class="hero-grid" aria-label="Headline prices">
+            <article class="card price-card price-card-main">
+                <h2>Gold spot (XAU/USD)</h2>
+                <div class="price" id="spotPrice">--</div>
+                <div class="delta" id="spotDelta">--</div>
+                <div class="sub">per troy ounce</div>
+            </article>
+            <article class="card price-card">
+                <h2>24K gram (EGP)</h2>
+                <div class="price" id="g24Price">--</div>
+                <div class="delta" id="g24Delta">--</div>
+                <div class="sub">sell price</div>
+            </article>
+            <article class="card price-card">
+                <h2>21K gram (EGP)</h2>
+                <div class="price" id="g21Price">--</div>
+                <div class="delta" id="g21Delta">--</div>
+                <div class="sub">most traded in Egypt</div>
+            </article>
+            <article class="card price-card">
+                <h2>USD / EGP</h2>
+                <div class="price" id="fxPrice">--</div>
+                <div class="sub" id="fxSource">--</div>
+            </article>
+        </section>
+
+        <!-- ============ Tabs ============ -->
+        <nav class="tabs" role="tablist" aria-label="Dashboard sections">
+            <button class="tab active" role="tab" data-tab="prices" aria-selected="true">Live prices</button>
+            <button class="tab" role="tab" data-tab="calculator" aria-selected="false">Calculator</button>
+            <button class="tab" role="tab" data-tab="ai" aria-selected="false">AI forecast</button>
+            <button class="tab" role="tab" data-tab="news" aria-selected="false">News &amp; sentiment</button>
+        </nav>
+
+        <!-- ============ Prices: search + matrix ============ -->
+        <section id="tab-prices" class="panel active" role="tabpanel">
+            <div class="toolbar">
+                <div class="search">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="M20 20l-4-4" />
+                    </svg>
+                    <input id="searchInput" type="search" autocomplete="off"
+                        placeholder="Search carats, coins or ingots (try 21k, pound, 10g, عيار)"
+                        aria-label="Search prices" />
+                </div>
+                <div class="chips" id="chips" role="group" aria-label="Filter by category">
+                    <button class="chip active" data-cat="all" type="button">All</button>
+                    <button class="chip" data-cat="carat" type="button">Carats</button>
+                    <button class="chip" data-cat="coin" type="button">Gold pound</button>
+                    <button class="chip" data-cat="bullion" type="button">Ingots</button>
+                </div>
+            </div>
+
+            <div class="card table-card">
+                <div class="table-wrap">
+                    <table class="rates-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th class="num">Sell (EGP)</th>
+                                <th class="num">Buy (EGP)</th>
+                                <th class="num">Spread</th>
+                                <th class="num">Making charge <span class="ar">مصنعية</span></th>
+                                <th class="num">Change</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ratesBody">
+                            <tr>
+                                <td colspan="6" class="empty">Loading prices…</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="note">Derived from international spot and the USD/EGP rate. Sell is what you pay, buy is what
+                    a shop pays you. Making charges are estimates and listed prices exclude stamp duty (دمغة); shops
+                    vary.</p>
+            </div>
+        </section>
+
+        <!-- ============ Calculator ============ -->
+        <section id="tab-calculator" class="panel" role="tabpanel" hidden>
+            <div class="card calc-card">
+                <div class="segmented" id="calcMode" role="group" aria-label="Calculator mode">
+                    <button type="button" class="seg active" data-mode="money">I have money</button>
+                    <button type="button" class="seg" data-mode="gold">I have gold</button>
+                </div>
+
+                <div class="calc-grid">
+                    <!-- Money mode inputs -->
+                    <div id="moneyInputs" class="calc-inputs">
+                        <label>Amount to invest
+                            <input id="moneyAmount" type="number" min="0" step="any" placeholder="e.g. 50000" />
+                        </label>
+                        <label>Currency
+                            <select id="moneyCurrency">
+                                <option value="EGP">EGP</option>
+                                <option value="USD">USD</option>
+                            </select>
+                        </label>
+                        <label>Gold carat
+                            <select id="moneyKarat"></select>
+                        </label>
+                    </div>
+
+                    <!-- Gold mode inputs -->
+                    <div id="goldInputs" class="calc-inputs" hidden>
+                        <label>Weight (grams)
+                            <input id="goldGrams" type="number" min="0" step="any" placeholder="e.g. 25" />
+                        </label>
+                        <label>Gold carat
+                            <select id="goldKarat"></select>
+                        </label>
+                    </div>
+
+                    <div id="calcResult" class="calc-result" aria-live="polite">
+                        <p class="empty">Enter an amount to see the result.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ AI forecast ============ -->
+        <section id="tab-ai" class="panel" role="tabpanel" hidden>
+            <div class="card ai-card">
+                <div class="ai-head">
+                    <div>
+                        <h2>Tomorrow's forecast</h2>
+                        <p class="sub" id="aiMeta">Ridge regression on OHLCV, daily range and return, MA50 and MA200.
+                        </p>
+                    </div>
+                    <button id="aiBtn" class="btn btn-gold" type="button">Run AI forecast</button>
+                </div>
+
+                <div class="ai-grid" id="aiGrid" hidden>
+                    <div class="stat"><span class="stat-label">Predicted close (USD/oz)</span><span class="stat-value"
+                            id="aiClose">--</span></div>
+                    <div class="stat"><span class="stat-label">Expected return</span><span class="stat-value"
+                            id="aiReturn">--</span></div>
+                    <div class="stat"><span class="stat-label">Signal</span><span class="stat-value"
+                            id="aiSignal">--</span></div>
+                    <div class="stat"><span class="stat-label">Estimated 21K price (EGP/g)</span><span
+                            class="stat-value" id="aiEgp">--</span></div>
+                </div>
+
+                <p id="aiFeatures" class="features" hidden></p>
+                <div id="aiChart" class="chart" hidden></div>
+                <ul id="aiNotes" class="notes"></ul>
+                <ul id="aiWarnings" class="warnings"></ul>
+                <p class="note">Forecasts are statistical estimates, not financial advice.</p>
+            </div>
+        </section>
+
+        <!-- ============ News ============ -->
+        <section id="tab-news" class="panel" role="tabpanel" hidden>
+            <div class="card news-card">
+                <div class="news-head">
+                    <h2>Market headlines</h2>
+                    <div id="newsSummary" class="news-summary"></div>
+                </div>
+                <ul id="newsList" class="news-list">
+                    <li class="empty">Loading headlines…</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">GoldPulse AI · Data from public feeds, with offline fallbacks · Not financial advice</footer>
+    <script src="script.js"></script>
+</body>
+
+</html>
